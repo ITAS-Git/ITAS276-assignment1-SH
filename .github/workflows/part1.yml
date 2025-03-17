@@ -1,11 +1,11 @@
 name: Assignment 1 Part 1
 on:
   push:
-    branches: [ "master", "main" ]
+    branches: [ "master" ]
     paths:
       - .github/workflows/securityLab.yml
   pull_request:
-    branches: [ "master", "main" ]
+    branches: [ "master" ]
   
 
 permissions:
