@@ -1,4 +1,4 @@
-name: Docker Image CI with Security Scanning
+name: Assignment 1 Part 1
 on:
   push:
     branches: [ "master", "main" ]
