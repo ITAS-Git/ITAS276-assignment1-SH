@@ -26,7 +26,6 @@ const httpsOptions = {
     cert: fs.readFileSync(path.resolve(__dirname, "./artifacts/cert/server.crt"))
 };
 */
-const fortesting = "testing";
 
 MongoClient.connect(db, (err, db) => {
     if (err) {
