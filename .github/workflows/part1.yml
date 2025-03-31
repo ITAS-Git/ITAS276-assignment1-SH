@@ -7,6 +7,21 @@ permissions:
   security-events: write
 
 jobs:
+
+  Discord-Begin:
+      runs-on: ubuntu-latest
+      steps:
+      - name: Discord Notification start
+        uses: tsickert/discord-webhook@v5.3.0
+        with:
+          webhook-url: ${{ secrets.DISCORD_WEBHOOK }}
+          username: ${{github.repository}}
+          avatar-url: https://thumbs.dreamstime.com/b/smoking-fish-11296061.jpg
+          embed-title: "Security Pipeline jobs are starting..."
+          embed-url: "${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
+          embed-description: "[Action details ${{ github.run_id }}](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }})"
+          embed-author-name: "${{ github.triggering_actor }}"
+          
   trufflehog:
     runs-on: ubuntu-latest
     if: (github.actor != 'dependabot[bot]')
@@ -53,6 +68,7 @@ jobs:
           webhook-url: ${{ secrets.DISCORD_WEBHOOK }}
           embed-title: "Semgrep Scan Completed"
           embed-description: "The **Semgrep scan** job finished with status: **${{ job.status }}** Download the [security report](https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}) under the 'Artifacts' section."
+          embed-color: "${{ job.status == 'success' && '3066993' || job.status == 'failure' && '15158332' || '9807270' }}"
           
      
 
