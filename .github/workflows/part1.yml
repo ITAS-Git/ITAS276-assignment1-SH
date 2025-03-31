@@ -24,8 +24,8 @@ jobs:
         if: always() # Ensures it runs even if the job fails
         with:
           webhook-url: ${{ secrets.DISCORD_WEBHOOK }}
-          embed-title: "Security Scan Completed"
-          embed-description: "The **security-scan** job finished with status: **${{ job.status }}**"
+          embed-title: "Trufflehog Job Completed"
+          embed-description: "The **Trufflehog** job finished with status: **${{ job.status }}**"
           embed-color: "${{ job.status == 'success' && '3066993' || job.status == 'failure' && '15158332' || '9807270' }}"
 
   semgrep:
@@ -45,6 +45,16 @@ jobs:
         with:
           name: semgrep.sarif
           path: semgrep.sarif
+      
+      - name: Discord Notification (Job Completion)
+        uses: tsickert/discord-webhook@v5.3.0
+        if: always() # Ensures it runs even if the job fails
+        with:
+          webhook-url: ${{ secrets.DISCORD_WEBHOOK }}
+          embed-title: "Semgrep Scan Completed"
+          embed-description: "The **Semgrep scan** job finished with status: **${{ job.status }}**"
+          embed-color: "${{ job.status == 'success' && '3066993' || job.status == 'failure' && '15158332' || '9807270' }}"
+
 
   snyk:
     runs-on: ubuntu-latest
@@ -65,6 +75,16 @@ jobs:
         with:
           name: snyk.sarif
           path: snyk.sarif
+      
+      - name: Discord Notification (Job Completion)
+        uses: tsickert/discord-webhook@v5.3.0
+        if: always() # Ensures it runs even if the job fails
+        with:
+          webhook-url: ${{ secrets.DISCORD_WEBHOOK }}
+          embed-title: "Snyk Scan Completed"
+          embed-description: "The **Snyk scan** job finished with status: **${{ job.status }}**"
+          embed-color: "${{ job.status == 'success' && '3066993' || job.status == 'failure' && '15158332' || '9807270' }}"
+
 
   build:
     runs-on: ubuntu-latest
@@ -86,6 +106,16 @@ jobs:
           file: Dockerfile
           push: true
           tags: ${{ secrets.DOCKER_USERNAME }}/itas276-assignment1:latest
+      
+      - name: Discord Notification (Job Completion)
+        uses: tsickert/discord-webhook@v5.3.0
+        if: always() # Ensures it runs even if the job fails
+        with:
+          webhook-url: ${{ secrets.DISCORD_WEBHOOK }}
+          embed-title: "Security Scan Completed"
+          embed-description: "The **security-scan** job finished with status: **${{ job.status }}**"
+          embed-color: "${{ job.status == 'success' && '3066993' || job.status == 'failure' && '15158332' || '9807270' }}"
+
 
    # - name: Build the Docker image
     #  run: docker build . --file Dockerfile --tag my-image-name:$(date +%s)
