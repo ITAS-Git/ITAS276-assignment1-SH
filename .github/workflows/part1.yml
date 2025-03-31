@@ -1,16 +1,15 @@
-name: Assignment 1 Part 1
-on: [push, pull_request]
-  
+name: Assignment 1 Part 1  # Name of the GitHub Actions workflow
+on: [push, pull_request]  # Triggers the workflow on push and pull request events
 
 permissions:
-  contents: read
-  security-events: write
+  contents: read  # Grants read access to repository contents
+  security-events: write  # Grants write access for security-related events
 
 jobs:
-
+  # Sends an initial notification to Discord when the pipeline starts
   Discord-Begin:
-      runs-on: ubuntu-latest
-      steps:
+    runs-on: ubuntu-latest
+    steps:
       - name: Discord Notification start
         uses: tsickert/discord-webhook@v5.3.0
         with:
@@ -21,41 +20,43 @@ jobs:
           embed-url: "${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
           embed-description: "[Action details ${{ github.run_id }}](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }})"
           embed-author-name: "${{ github.triggering_actor }}"
-          
+  
+  # Runs Trufflehog to scan for secrets in the repository
   trufflehog:
     runs-on: ubuntu-latest
-    if: (github.actor != 'dependabot[bot]')
+    if: (github.actor != 'dependabot[bot]')  # Skips this job if triggered by Dependabot
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v4  # Checks out the repository code
         with:
-          fetch-depth: 0
+          fetch-depth: 0  # Ensures full commit history is available
       - name: Secret Scanning
-        uses: trufflesecurity/trufflehog@main
+        uses: trufflesecurity/trufflehog@main  # Runs Trufflehog to scan for secrets
         with:
-          extra_args: --only-verified
-          
+          extra_args: --only-verified  # Only reports verified secrets
+      
       - name: Discord Notification (Job Completion)
         uses: tsickert/discord-webhook@v5.3.0
-        if: always() # Ensures it runs even if the job fails
+        if: always()  # Runs this step even if the job fails
         with:
           webhook-url: ${{ secrets.DISCORD_WEBHOOK }}
           embed-title: "Trufflehog Job Completed"
           embed-description: "The **Trufflehog** job finished with status: **${{ job.status }}**"
           embed-color: "${{ job.status == 'success' && '3066993' || job.status == 'failure' && '15158332' || '9807270' }}"
 
+  # Runs Semgrep for static code analysis
   semgrep:
     name: semgrep/ci
     runs-on: ubuntu-latest
-    needs: [trufflehog]
+    needs: [trufflehog]  # Runs only after Trufflehog completes
     if: (github.actor != 'dependabot[bot]')
     container:
-      image: semgrep/semgrep
+      image: semgrep/semgrep  # Uses the Semgrep container image
     steps:
       - uses: actions/checkout@v4
-      - run: semgrep ci --sarif > semgrep.sarif
+      - run: semgrep ci --sarif > semgrep.sarif  # Runs Semgrep and outputs results in SARIF format
         env:
-          SEMGREP_APP_TOKEN: ${{ secrets.SEMGREP_APP_TOKEN }}
-      - name: Upload a semgrep sarif
+          SEMGREP_APP_TOKEN: ${{ secrets.SEMGREP_APP_TOKEN }}  # Auth token for Semgrep
+      - name: Upload a semgrep SARIF report
         uses: actions/upload-artifact@v4.6.1
         with:
           name: semgrep.sarif
@@ -63,15 +64,14 @@ jobs:
       
       - name: Discord Notification (Job Completion)
         uses: tsickert/discord-webhook@v5.3.0
-        if: always() # Ensures it runs even if the job fails
+        if: always()
         with:
           webhook-url: ${{ secrets.DISCORD_WEBHOOK }}
           embed-title: "Semgrep Scan Completed"
           embed-description: "The **Semgrep scan** job finished with status: **${{ job.status }}** Download the [security report](https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}) under the 'Artifacts' section."
           embed-color: "${{ job.status == 'success' && '3066993' || job.status == 'failure' && '15158332' || '9807270' }}"
-          
-     
 
+  # Runs Snyk for security vulnerability scanning in Docker images
   snyk:
     runs-on: ubuntu-latest
     needs: [trufflehog]
@@ -79,8 +79,8 @@ jobs:
     steps:
       - uses: actions/checkout@v2
       - name: Build a Docker image
-        uses: snyk/actions/docker@master
-        continue-on-error: true
+        uses: snyk/actions/docker@master  # Runs Snyk scan on a Docker image
+        continue-on-error: true  # Allows workflow to continue even if Snyk fails
         env:
           SNYK_TOKEN: ${{ secrets.SNYK_APP_TOKEN }}
         with:
@@ -94,17 +94,17 @@ jobs:
       
       - name: Discord Notification (Job Completion)
         uses: tsickert/discord-webhook@v5.3.0
-        if: always() # Ensures it runs even if the job fails
+        if: always()
         with:
           webhook-url: ${{ secrets.DISCORD_WEBHOOK }}
           embed-title: "Snyk Scan Completed"
           embed-description: "The **Snyk scan** job finished with status: **${{ job.status }}**"
           embed-color: "${{ job.status == 'success' && '3066993' || job.status == 'failure' && '15158332' || '9807270' }}"
 
-
+  # Builds and pushes a Docker image
   build:
     runs-on: ubuntu-latest
-    needs: [semgrep, snyk]
+    needs: [semgrep, snyk]  # Runs only after Semgrep and Snyk complete
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -113,25 +113,24 @@ jobs:
         with: 
           username: ${{ secrets.DOCKER_USERNAME }}
           password: ${{ secrets.DOCKER_PASSWORD }}
-      - name: Set up docker Buildx
+      - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3.8.0
-      - name: Build and push
+      - name: Build and push Docker image
         uses: docker/build-push-action@v6.12.0
         with:
           context: .
           file: Dockerfile
-          push: true
+          push: true  # Pushes the image to Docker Hub
           tags: ${{ secrets.DOCKER_USERNAME }}/itas276-assignment1:latest
       
       - name: Discord Notification (Job Completion)
         uses: tsickert/discord-webhook@v5.3.0
-        if: always() # Ensures it runs even if the job fails
+        if: always()
         with:
           webhook-url: ${{ secrets.DISCORD_WEBHOOK }}
           embed-title: "Build Completed"
           embed-description: "The **Build** job finished with status: **${{ job.status }}**"
           embed-color: "${{ job.status == 'success' && '3066993' || job.status == 'failure' && '15158332' || '9807270' }}"
-
 
    # - name: Build the Docker image
     #  run: docker build . --file Dockerfile --tag my-image-name:$(date +%s)
