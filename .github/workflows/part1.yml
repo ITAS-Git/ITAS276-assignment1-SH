@@ -52,9 +52,9 @@ jobs:
         with:
           webhook-url: ${{ secrets.DISCORD_WEBHOOK }}
           embed-title: "Semgrep Scan Completed"
-          embed-description: "The **Semgrep scan** job finished with status: **${{ job.status }}**"
+          embed-description: "The **Semgrep scan** job finished with status: **${{ job.status }}** Download the [security report](https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}) under the 'Artifacts' section."
           embed-color: "${{ job.status == 'success' && '3066993' || job.status == 'failure' && '15158332' || '9807270' }}"
-
+     
 
   snyk:
     runs-on: ubuntu-latest
@@ -112,8 +112,8 @@ jobs:
         if: always() # Ensures it runs even if the job fails
         with:
           webhook-url: ${{ secrets.DISCORD_WEBHOOK }}
-          embed-title: "Security Scan Completed"
-          embed-description: "The **security-scan** job finished with status: **${{ job.status }}**"
+          embed-title: "Build Completed"
+          embed-description: "The **Build** job finished with status: **${{ job.status }}**"
           embed-color: "${{ job.status == 'success' && '3066993' || job.status == 'failure' && '15158332' || '9807270' }}"
 
 
