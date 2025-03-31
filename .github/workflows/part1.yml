@@ -18,6 +18,15 @@ jobs:
         uses: trufflesecurity/trufflehog@main
         with:
           extra_args: --only-verified
+          
+      - name: Discord Notification (Job Completion)
+        uses: tsickert/discord-webhook@v5.3.0
+        if: always() # Ensures it runs even if the job fails
+        with:
+          webhook-url: ${{ secrets.DISCORD_WEBHOOK }}
+          embed-title: "Security Scan Completed"
+          embed-description: "The **security-scan** job finished with status: **${{ job.status }}**"
+          embed-color: "${{ job.status == 'success' && '3066993' || job.status == 'failure' && '15158332' || '9807270' }}"
 
   semgrep:
     name: semgrep/ci
